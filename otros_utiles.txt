@@ -1,0 +1,40 @@
+# Importar el módulo WebAdministration si aún no está cargado
+Import-Module WebAdministration
+
+# Definir el nombre del sitio que quieres eliminar
+$siteName = "safeguard"
+
+# Eliminar el sitio
+Remove-Item "IIS:\Sites\$siteName" -Force
+
+# Definir el nombre del sitio que quieres eliminar
+$siteName = "safeguard2"
+
+# Eliminar el sitio
+Remove-Item "IIS:\Sites\$siteName" -Force -Recurse
+
+# Definir el nombre del sitio que quieres eliminar
+$siteName = "safeguard3"
+
+# Eliminar el sitio
+Remove-Item "IIS:\Sites\$siteName" -Force
+
+
+$taskName = "Safeguard_site"
+$scriptPath = "C:\Users\THor\Desktop\safeguard3\sg_fdhp.ps1"
+
+# Acción que ejecuta el script con permisos elevados
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+
+# El disparador: comienza ahora y se repite cada 5 minutos indefinidamente
+$startTime = (Get-Date).AddMinutes(1).ToString("HH:mm")
+$trigger = New-ScheduledTaskTrigger -Once -At $startTime
+$trigger.Repetition.Interval = "00:05:00"  # Formato correcto HH:MM:SS
+$trigger.Repetition.Duration = "P1D"       # ISO 8601: duración de 1 día (puedes cambiar a P7D para 1 semana)
+
+# Principal (usuario SYSTEM, con privilegios elevados)
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+
+# Registrar la tarea
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Force
+
